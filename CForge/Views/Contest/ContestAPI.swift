@@ -35,7 +35,7 @@ extension ContestListView {
             ])
         }
         
-        return response.result?.filter { $0.phase == "BEFORE" } ?? []
+        return response.result ?? []
     }
     
     func handleError(_ error: Error) {
