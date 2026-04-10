@@ -294,30 +294,7 @@ struct ProfileView: View {
             .cornerRadius(12)
         }
     }
-    // MARK: - New Recent Activity Section
-    private func recentActivitySection() -> some View {
-        VStack(alignment: .leading) {
-            Text("Recent Activity")
-                .font(.headline)
-            
-            ForEach(0..<4, id: \.self) { _ in
-                HStack {
-                    Circle()
-                        .frame(width: 8, height: 8)
-                        .foregroundColor(.green)
-                    Text("Solved Problem 123A")
-                    Spacer()
-                    Text("2h ago")
-                        .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 4)
-            }
-        }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-    }
-    
+   
     
     // MARK: - API Fetch Function
     
