@@ -3,7 +3,6 @@ import SwiftUI
 struct ContestListView: View {
 
     @State var contests: [CFContest] = []
-    @State var searchText: String = ""
     @State var selectedPhase: String = "Upcoming"
     @State var selectedType: String = "All"
     @State var ratedOnly: Bool = false
@@ -12,139 +11,139 @@ struct ContestListView: View {
     @State var errorMessage: String = ""
 
     private let phases = ["Upcoming", "Active", "Finished"]
-    private let types = ["All", "CF", "ICPC", "IOI"]
 
     var body: some View {
         NavigationView {
-            contentView
-                .navigationTitle("Contests")
-                .onAppear {
-                    Task { await loadContests() }
+            VStack {
+
+                Picker("Phase", selection: $selectedPhase) {
+                    ForEach(phases, id: \.self) {
+                        Text($0)
+                    }
                 }
-        }
-    }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
 
-    private var filteredContests: [CFContest] {
-        let searched = contests.filter {
-            searchText.isEmpty || $0.name.lowercased().contains(searchText.lowercased())
-        }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
 
-        let typeFiltered = searched.filter { contest in
-            (selectedType == "All" || contest.type == selectedType) &&
-            (!ratedOnly || (contest.isRated))
-        }
+                        ForEach(["All", "CF", "ICPC", "IOI"], id: \.self) { type in
+                            Button(action: {
+                                selectedType = type
+                            }) {
+                                Text(type)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(selectedType == type ? Color.blue : Color.gray.opacity(0.2))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                            }
+                        }
 
-        switch selectedPhase {
-        case "Upcoming":
-            return typeFiltered.filter { $0.phase == "BEFORE" }
-
-        case "Active":
-            return typeFiltered.filter {
-                ["CODING", "PENDING_SYSTEM_TEST", "SYSTEM_TEST"].contains($0.phase)
-            }
-
-        case "Finished":
-            return typeFiltered
-                .filter { $0.phase == "FINISHED" }
-                .sorted { ($0.startTimeSeconds ?? 0) > ($1.startTimeSeconds ?? 0) }
-                .prefix(50)
-                .map { $0 }
-
-        default:
-            return typeFiltered
-        }
-    }
-
-    private var contentView: some View {
-        VStack {
-
-            Picker("Phase", selection: $selectedPhase) {
-                ForEach(phases, id: \.self) {
-                    Text($0)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
-                    ForEach(types, id: \.self) { type in
                         Button(action: {
-                            selectedType = type
+                            ratedOnly.toggle()
                         }) {
-                            Text(type)
+                            Text("Rated")
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(selectedType == type ? Color.blue : Color.gray.opacity(0.2))
+                                .background(ratedOnly ? Color.green : Color.gray.opacity(0.2))
                                 .foregroundColor(.white)
                                 .cornerRadius(10)
                         }
                     }
-
-                    Button(action: {
-                        ratedOnly.toggle()
-                    }) {
-                        Text("Rated")
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(ratedOnly ? Color.green : Color.gray.opacity(0.2))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
-            }
 
-            TextField("Search contests...", text: $searchText)
-                .padding(10)
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(10)
-                .padding()
+                ScrollView {
+                    LazyVStack(spacing: 12) {
 
-            ScrollView {
-                LazyVStack {
+                        ForEach(filteredContests) { contest in
+                            NavigationLink(destination: Text(contest.name)) {
 
-                    if filteredContests.isEmpty {
-                        Text("No contests available")
-                            .foregroundColor(.gray)
-                            .padding()
-                    }
+                                VStack(alignment: .leading, spacing: 10) {
 
-                    ForEach(filteredContests) { contest in
-                        NavigationLink(destination: Text(contest.name)) {
+                                    HStack {
+                                        Text(contest.name)
+                                            .font(.headline)
+                                            .foregroundColor(.white)
 
-                            VStack(alignment: .leading, spacing: 8) {
+                                        Spacer()
 
-                                HStack {
-                                    Text(contest.name)
-                                        .font(.headline)
-                                        .foregroundColor(.white)
+                                        if ["CODING", "PENDING_SYSTEM_TEST", "SYSTEM_TEST"].contains(contest.phase) {
+                                            Text("LIVE")
+                                                .font(.caption)
+                                                .padding(6)
+                                                .background(Color.red)
+                                                .cornerRadius(6)
+                                        }
+                                    }
 
-                                    Spacer()
+                                    HStack(spacing: 16) {
 
-                                    if ["CODING", "PENDING_SYSTEM_TEST", "SYSTEM_TEST"].contains(contest.phase) {
-                                        Text("LIVE")
+                                        if let start = contest.startTimeSeconds {
+                                            Text(timeString(from: start))
+                                                .foregroundColor(.cyan)
+                                        }
+
+                                        Text(durationString(from: contest.durationSeconds))
+                                            .foregroundColor(.cyan)
+                                    }
+
+                                    Divider().background(Color.gray)
+
+                                    HStack {
+                                        Spacer()
+
+                                        Text("Register")
                                             .font(.caption)
-                                            .padding(6)
-                                            .background(Color.red)
-                                            .cornerRadius(6)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(Color.blue.opacity(0.2))
+                                            .foregroundColor(.blue)
+                                            .cornerRadius(8)
                                     }
                                 }
-
-                                Text("Type: \(contest.type)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [.cyan, .blue],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                )
+                                .background(Color.black.opacity(0.8))
+                                .cornerRadius(16)
+                                .padding(.horizontal)
                             }
-                            .padding()
-                            .background(Color.black.opacity(0.8))
-                            .cornerRadius(12)
-                            .padding(.horizontal)
                         }
                     }
                 }
             }
+            .navigationTitle("Contests")
+            .background(Color.black.edgesIgnoringSafeArea(.all))
+            .onAppear {
+                Task {
+                    await loadContests()
+                }
+            }
         }
-        .background(Color.black.edgesIgnoringSafeArea(.all))
+    }
+
+    private func timeString(from timestamp: Int) -> String {
+        let date = Date(timeIntervalSince1970: TimeInterval(timestamp))
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func durationString(from seconds: Int) -> String {
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        return "\(hours)h \(minutes)m"
     }
 }
 
