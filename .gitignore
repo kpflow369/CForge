@@ -1,6 +1,79 @@
+# Build
+build/
+DerivedData/
+
+# Xcode workspace
+*.xcworkspace
+!default.xcworkspace
+
 # Xcode user data
 xcuserdata/
+**/xcuserdata/
 *.xcuserstate
+*.xcuserdatad
+
+# Xcode misc
+*.xccheckout
+*.moved-aside
+*.xcscmblueprint
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+# Xcode SwiftPM shared data
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+
+# Dependency managers
+Pods/
+Podfile.lock
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Archives
+*.xcarchive
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temp files
+*.swp
+*.tmp
+*.temp
+
+# Firebase / Config
+GoogleService-Info.plist
+Secrets.plist
+Config/*.plist
+
+# Coverage
+*.gcda
+*.gcno
+*.gcov
+
+# Xcode timelines & playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Crashlytics
+crashlytics.properties
+
+# CI
+ci_scripts/
