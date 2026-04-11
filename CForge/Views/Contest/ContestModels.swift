@@ -17,7 +17,7 @@ struct CFContest: Identifiable, Codable {
     }
     
     var isRated: Bool {
-        return type.lowercased().contains("rated") || name.lowercased().contains("rated")
+        return name.lowercased().contains("rated") && !name.lowercased().contains("unrated")
     }
     
     var startTime: Date {
