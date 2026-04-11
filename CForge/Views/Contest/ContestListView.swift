@@ -15,37 +15,48 @@ struct ContestListView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
 
+                //Phase selector
                 Picker("Phase", selection: $selectedPhase) {
                     ForEach(phases, id: \.self) { Text($0) }
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
 
+                ContestSearchBar(text: $searchText, placeholder: "Search contests...")
+                    .padding(.horizontal)
+
+                // Type filters
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
+                    HStack(spacing: 10) {
                         ForEach(["All", "CF", "ICPC", "IOI"], id: \.self) { type in
                             Button {
                                 selectedType = type
                             } label: {
                                 Text(type)
-                                    .padding(8)
-                                    .background(selectedType == type ? Color.blue : Color.gray.opacity(0.3))
-                                    .cornerRadius(8)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        selectedType == type
+                                        ? Color.blue
+                                        : Color.gray.opacity(0.3)
+                                    )
+                                    .cornerRadius(10)
+                                    .foregroundColor(.white)
                             }
                         }
                     }
+                    .padding(.horizontal)
                 }
 
-                ContestSearchBar(text: $searchText, placeholder: "Search contests...")
-                    .padding(.horizontal)
-
+                //Contest list
                 if isRefreshing {
                     ProgressView()
+                        .padding(.top, 20)
                 } else {
                     ScrollView {
-                        LazyVStack {
+                        LazyVStack(spacing: 16) {
                             ForEach(filteredContests) { contest in
                                 NavigationLink {
                                     ContestDetailView(contest: contest)
@@ -54,6 +65,7 @@ struct ContestListView: View {
                                 }
                             }
                         }
+                        .padding(.top, 5)
                     }
                     .refreshable {
                         await loadContests()
@@ -62,6 +74,7 @@ struct ContestListView: View {
             }
             .navigationTitle("Contests")
 
+            // Error alert
             .alert("Error", isPresented: $showError) {
                 Button("OK") {}
             } message: {
@@ -74,30 +87,39 @@ struct ContestListView: View {
         }
     }
 
+    // MARK: - Filtering Logic
+
     var filteredContests: [CFContest] {
         contests.filter { contest in
+            
+            // Phase filter
             let matchesPhase =
                 (selectedPhase == "Upcoming" && contest.phase == "BEFORE") ||
                 (selectedPhase == "Active" && contest.phase == "CODING") ||
                 (selectedPhase == "Finished" && contest.phase == "FINISHED")
 
+            //FIXED: Case-insensitive type match
+            let matchesType =
+                selectedType == "All" ||
+                contest.name.lowercased().contains(selectedType.lowercased())
+
+            // Search filter
             let matchesSearch =
                 searchText.isEmpty ||
                 contest.name.lowercased().contains(searchText.lowercased())
 
-            return matchesPhase && matchesSearch
+            return matchesPhase && matchesType && matchesSearch
         }
     }
 
-    // MARK: API
+    // MARK: - API
 
     func loadContests() async {
         isRefreshing = true
         do {
             contests = try await fetchContests()
         } catch {
-            errorMessage = error.localizedDescription
-            showError = true
+            handleError(error)
         }
         isRefreshing = false
     }
@@ -109,12 +131,14 @@ struct ContestListView: View {
         let response = try JSONDecoder().decode(ContestResponse.self, from: data)
 
         guard response.status == "OK" else {
-            throw NSError(domain: "", code: 0)
+            throw NSError(domain: "", code: 0, userInfo: [
+                NSLocalizedDescriptionKey: response.comment ?? "Unknown error"
+            ])
         }
 
         return response.result ?? []
     }
-    
+
     func handleError(_ error: Error) {
         errorMessage = error.localizedDescription
         showError = true
