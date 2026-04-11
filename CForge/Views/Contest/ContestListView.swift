@@ -54,82 +54,96 @@ struct ContestListView: View {
                     .padding(.horizontal)
                 }
 
-                ScrollView {
-                    LazyVStack(spacing: 12) {
+                if isRefreshing {
+                    ProgressView("Loading contests...")
+                        .foregroundColor(.white)
+                        .padding()
+                }
+                else {
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
 
-                        ForEach(filteredContests) { contest in
-                            NavigationLink(destination: Text(contest.name)) {
+                            ForEach(filteredContests) { contest in
+                                NavigationLink(destination: Text(contest.name)) {
 
-                                VStack(alignment: .leading, spacing: 10) {
+                                    VStack(alignment: .leading, spacing: 10) {
 
-                                    HStack {
-                                        Text(contest.name)
-                                            .font(.headline)
-                                            .foregroundColor(.white)
+                                        HStack {
+                                            Text(contest.name)
+                                                .font(.headline)
+                                                .foregroundColor(.white)
 
-                                        Spacer()
+                                            Spacer()
 
-                                        if ["CODING", "PENDING_SYSTEM_TEST", "SYSTEM_TEST"].contains(contest.phase) {
-                                            Text("LIVE")
-                                                .font(.caption)
-                                                .padding(6)
-                                                .background(Color.red)
-                                                .cornerRadius(6)
+                                            if ["CODING", "PENDING_SYSTEM_TEST", "SYSTEM_TEST"].contains(contest.phase) {
+                                                Text("LIVE")
+                                                    .font(.caption)
+                                                    .padding(6)
+                                                    .background(Color.red)
+                                                    .cornerRadius(6)
+                                            }
                                         }
-                                    }
 
-                                    HStack(spacing: 16) {
+                                        HStack(spacing: 16) {
 
-                                        if let start = contest.startTimeSeconds {
-                                            Text(timeString(from: start))
+                                            if let start = contest.startTimeSeconds {
+                                                Text(timeString(from: start))
+                                                    .foregroundColor(.cyan)
+                                            }
+
+                                            Text(durationString(from: contest.durationSeconds))
                                                 .foregroundColor(.cyan)
                                         }
 
-                                        Text(durationString(from: contest.durationSeconds))
-                                            .foregroundColor(.cyan)
+                                        Divider().background(Color.gray)
+
+                                        HStack {
+                                            Spacer()
+
+                                            Text("Register")
+                                                .font(.caption)
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(Color.blue.opacity(0.2))
+                                                .foregroundColor(.blue)
+                                                .cornerRadius(8)
+                                        }
                                     }
-
-                                    Divider().background(Color.gray)
-
-                                    HStack {
-                                        Spacer()
-
-                                        Text("Register")
-                                            .font(.caption)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(Color.blue.opacity(0.2))
-                                            .foregroundColor(.blue)
-                                            .cornerRadius(8)
-                                    }
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [.cyan, .blue],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                                    .background(Color.black.opacity(0.8))
+                                    .cornerRadius(16)
+                                    .padding(.horizontal)
                                 }
-                                .padding()
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [.cyan, .blue],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            ),
-                                            lineWidth: 1
-                                        )
-                                )
-                                .background(Color.black.opacity(0.8))
-                                .cornerRadius(16)
-                                .padding(.horizontal)
                             }
                         }
                     }
                 }
+                }
             }
             .navigationTitle("Contests")
             .background(Color.black.edgesIgnoringSafeArea(.all))
+            .alert("Error", isPresented: $showError) {
+                Button("OK") {}
+            } message: {
+                Text(errorMessage)
+            }
             .onAppear {
                 Task {
                     await loadContests()
                 }
             }
+            
         }
     }
 

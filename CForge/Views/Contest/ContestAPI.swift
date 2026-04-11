@@ -4,6 +4,9 @@ import Foundation
 extension ContestListView {
     
     func loadContests() async {
+        isRefreshing = true
+        defer { isRefreshing = false }
+
         do {
             contests = try await fetchContests()
         } catch {
