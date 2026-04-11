@@ -11,16 +11,6 @@ extension ContestListView {
         }
     }
     
-    func refreshContests() async {
-        isRefreshing = true
-        do {
-            contests = try await fetchContests()
-        } catch {
-            handleError(error)
-        }
-        isRefreshing = false
-    }
-    
     func fetchContests() async throws -> [CFContest] {
         guard let url = URL(string: "https://codeforces.com/api/contest.list") else {
             throw URLError(.badURL)
